@@ -15,8 +15,9 @@ def create_app():
     user_datastore = SQLAlchemyUserDatastore(db, user.User, role.Role)
     security.init_app(app, user_datastore)
 
-    from app.views import auth_blueprint
+    from app.views import auth_blueprint, projects
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(projects.bp, url_prefix='/projects')
 
     with app.app_context():
         db.create_all()
