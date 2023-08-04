@@ -42,9 +42,33 @@ def invite_collaborator():
 def list_projects():
     user_id = get_jwt_identity()
     owned_projects = Project.query.filter_by(owner_id=user_id).all()
-    collaboration_projects = Collaborator.query.filter_by(user_id=user_id).all()
-    # Convert projects to a suitable format for response
-    # ...
-    return jsonify(owned_projects=..., collaboration_projects=...)
+    collaboration_projects = Collaborator.query.filter_by(user_id=user_id).join(Project).all()
+
+    owned_projects_response = [
+        {
+            'id': project.id,
+            'name': project.name,
+            'description': project.description,
+            'created_at': project.created_at.isoformat()
+        }
+        for project in owned_projects
+    ]
+
+    collaboration_projects_response = [
+        {
+            'id': collaboration.project.id,
+            'name': collaboration.project.name,
+            'description': collaboration.project.description,
+            'created_at': collaboration.project.created_at.isoformat(),
+            'permissions': collaboration.permissions
+        }
+        for collaboration in collaboration_projects
+    ]
+
+    return jsonify(
+        owned_projects=owned_projects_response,
+        collaboration_projects=collaboration_projects_response
+    )
+
 
 # Additional endpoints can be added to manage project workflow, update projects, remove collaborators, etc.
