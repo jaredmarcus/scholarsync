@@ -70,5 +70,15 @@ def list_projects():
         collaboration_projects=collaboration_projects_response
     )
 
+@bp.route('/projects/<int:project_id>', methods=['PUT'])
+@jwt_required()
+def update_project(project_id):
+    user_id = get_jwt_identity()
+    project = Project.query.get(project_id)
+    if not project or project.owner_id != user_id:
+        return jsonify(message="Unauthorized"), 403
 
-# Additional endpoints can be added to manage project workflow, update projects, remove collaborators, etc.
+    project.name = request.json.get('name', project.name)
+    project.description = request.json.get('description', project.description)
+    db.session.commit()
+    return jsonify(message="Project updated")
