@@ -82,3 +82,20 @@ def update_project(project_id):
     project.description = request.json.get('description', project.description)
     db.session.commit()
     return jsonify(message="Project updated")
+
+@bp.route('/projects/<int:project_id>/collaborators/<int:collaborator_id>', methods=['DELETE'])
+@jwt_required()
+def remove_collaborator(project_id, collaborator_id):
+    user_id = get_jwt_identity()
+    project = Project.query.get(project_id)
+    if not project or project.owner_id != user_id:
+        return jsonify(message="Unauthorized"), 403
+
+    collaborator = Collaborator.query.get(collaborator_id)
+    if not collaborator or collaborator.project_id != project_id:
+        return jsonify(message="Collaborator not found"), 404
+
+    db.session.delete(collaborator)
+    db.session.commit()
+    return jsonify(message="Collaborator removed")
+
