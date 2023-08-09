@@ -99,3 +99,41 @@ def remove_collaborator(project_id, collaborator_id):
     db.session.commit()
     return jsonify(message="Collaborator removed")
 
+@bp.route('/projects/<int:project_id>/tasks', methods=['POST'])
+@jwt_required()
+def add_task(project_id):
+    user_id = get_jwt_identity()
+    project = Project.query.get(project_id)
+    
+    # Verify if the project exists and the user is the owner
+    if not project or project.owner_id != user_id:
+        return jsonify(message="Unauthorized"), 403
+
+    # Fetch task details from the request
+    task_title = request.json.get('title')
+    task_description = request.json.get('description')
+    task_deadline = request.json.get('deadline')
+    task_status = request.json.get('status', "Not Started")
+    task_priority = request.json.get('priority', "Medium")
+    task_assignee_id = request.json.get('assignee_id')
+
+    # Validate necessary fields
+    if not task_title:
+        return jsonify(message="Task title is required"), 400
+
+    # Create the Task model and associate it with the project
+    task = Task(
+        title=task_title,
+        description=task_description,
+        deadline=task_deadline,
+        status=task_status,
+        priority=task_priority,
+        assignee_id=task_assignee_id,
+        project_id=project_id
+    )
+    
+    # Add the task to the database
+    db.session.add(task)
+    db.session.commit()
+
+    return jsonify(message="Task added", task_id=task.id)
